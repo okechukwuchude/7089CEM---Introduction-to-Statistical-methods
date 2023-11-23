@@ -1,0 +1,364 @@
+##Modelling gene expression using nonlinear regression##
+
+# Loading of dataset
+gene_data <- read.csv('./gene_data.csv', header=FALSE, 
+                      col.names=c('Time', 'X1', 'X2', 'X3', 'X4', 'X5'))
+
+# Task 1: Preliminary data analysis
+
+# Time Series Plots
+# Plotting time series for each gene
+library(ggplot2)
+
+ggplot(gene_data, aes(x=Time)) +
+  geom_line(aes(y=X1, color="Gene 1")) +
+  geom_line(aes(y=X2, color="Gene 2")) +
+  geom_line(aes(y=X3, color="Gene 3")) +
+  geom_line(aes(y=X4, color="Gene 4")) +
+  geom_line(aes(y=X5, color="Gene 5")) +
+  labs(title='Time Series Plot of Gene Expression',
+       x='Time (minutes)',
+       y='Expression Level') +
+  scale_color_manual(values=c("Gene 1"="blue", "Gene 2"="red", "Gene 3"="green", "Gene 4"="purple", "Gene 5"="orange")) +
+  theme_minimal()
+
+
+#distributions for each gene
+
+ggplot(gene_data, aes(x=X1, fill="Gene 1")) +
+  geom_density(alpha=0.5) +
+  geom_density(aes(x=X2, fill="Gene 2"), alpha=0.5) +
+  geom_density(aes(x=X3, fill="Gene 3"), alpha=0.5) +
+  geom_density(aes(x=X4, fill="Gene 4"), alpha=0.5) +
+  geom_density(aes(x=X5, fill="Gene 5"), alpha=0.5) +
+  labs(title='Distribution of Gene Expression Levels',
+       x='Expression Level',
+       y='Density') +
+  scale_fill_manual(values=c("Gene 1"="blue", "Gene 2"="red", "Gene 3"="green", "Gene 4"="purple", "Gene 5"="orange")) +
+  theme_minimal()
+
+
+# Calculate correlation matrix
+correlation_matrix <- cor(gene_data[, 2:6])  # Exclude 'Time' for correlation
+
+# Heatmap for correlation matrix using corrplot
+library(corrplot)
+
+corrplot(correlation_matrix, method="color", type="upper", 
+         col=colorRampPalette(c("blue", "white", "red"))(50),
+         addCoef.col="black", tl.col="black", tl.srt=45)
+
+title("Correlation Matrix Heatmap")
+
+
+# Scatter plots
+pairs(gene_data[, 2:6], 
+      col=rainbow(5), # Use different colors for each gene
+      pch=16,         # Set point character
+      main='Scatter Plots and Distributions for Each Gene Pair')
+
+# Add histograms on the diagonal
+hist(gene_data$X1, col=rainbow(5)[1], xlab='Expression Level', main='')
+hist(gene_data$X2, col=rainbow(5)[2], xlab='Expression Level', main='')
+hist(gene_data$X3, col=rainbow(5)[3], xlab='Expression Level', main='')
+hist(gene_data$X4, col=rainbow(5)[4], xlab='Expression Level', main='')
+hist(gene_data$X5, col=rainbow(5)[5], xlab='Expression Level', main='')
+
+
+# Task 2: Regression – modeling the relationship between gene expression
+
+# Task 2.1
+
+# Output vector y (Gene X2 expression levels)
+y <- gene_data$X2
+
+# Design matrices for each model
+X1 <- cbind(gene_data$X4, gene_data$X3^2, rep(1, nrow(gene_data)))
+X2 <- cbind(gene_data$X4, gene_data$X3^2, gene_data$X5, rep(1, nrow(gene_data)))
+X3 <- cbind(gene_data$X3, gene_data$X4, gene_data$X5^3)
+X4 <- cbind(gene_data$X4, gene_data$X3^2, gene_data$X5^3, rep(1, nrow(gene_data)))
+X5 <- cbind(gene_data$X4, gene_data$X1^2, gene_data$X3^2, rep(1, nrow(gene_data)))
+
+# Estimating parameters for each model
+model1 <- lm(y ~ ., data=data.frame(X1, y))
+model2 <- lm(y ~ ., data=data.frame(X2, y))
+model3 <- lm(y ~ ., data=data.frame(X3, y))
+model4 <- lm(y ~ ., data=data.frame(X4, y))
+model5 <- lm(y ~ ., data=data.frame(X5, y))
+
+# Displaying model coefficients
+summary(model1)$coefficients
+summary(model2)$coefficients
+summary(model3)$coefficients
+summary(model4)$coefficients
+summary(model5)$coefficients
+
+#Task 2.2
+
+# Function to compute RSS
+compute_RSS <- function(model, X, y) {
+  residuals <- y - predict(model, newdata = data.frame(X))
+  RSS <- sum(residuals^2) / length(residuals)
+  return(RSS)
+}
+
+# Compute RSS for each model
+RSS_model1 <- compute_RSS(model1, X1, y)
+RSS_model2 <- compute_RSS(model2, X2, y)
+RSS_model3 <- compute_RSS(model3, X3, y)
+RSS_model4 <- compute_RSS(model4, X4, y)
+RSS_model5 <- compute_RSS(model5, X5, y)
+
+# Display RSS for each model
+cat("RSS for Model 1:", RSS_model1, "\n")
+cat("RSS for Model 2:", RSS_model2, "\n")
+cat("RSS for Model 3:", RSS_model3, "\n")
+cat("RSS for Model 4:", RSS_model4, "\n")
+cat("RSS for Model 5:", RSS_model5, "\n")
+
+#Task 2.3 Log-likelihood
+# Function to compute log-likelihood
+compute_log_likelihood <- function(model, X, y) {
+  n <- length(y)
+  residuals <- y - predict(model, newdata = data.frame(X))
+  RSS <- sum(residuals^2)
+  sigma_hat_squared <- RSS / (n - 1)
+  
+  log_likelihood <- -n/2 * log(2 * pi) - n/2 * log(sigma_hat_squared) - 1/(2 * sigma_hat_squared) * RSS
+  
+  return(log_likelihood)
+}
+
+# Compute log-likelihood for each model
+log_likelihood_model1 <- compute_log_likelihood(model1, X1, y)
+log_likelihood_model2 <- compute_log_likelihood(model2, X2, y)
+log_likelihood_model3 <- compute_log_likelihood(model3, X3, y)
+log_likelihood_model4 <- compute_log_likelihood(model4, X4, y)
+log_likelihood_model5 <- compute_log_likelihood(model5, X5, y)
+
+# Display log-likelihood for each model
+cat("Log-Likelihood for Model 1:", log_likelihood_model1, "\n")
+cat("Log-Likelihood for Model 2:", log_likelihood_model2, "\n")
+cat("Log-Likelihood for Model 3:", log_likelihood_model3, "\n")
+cat("Log-Likelihood for Model 4:", log_likelihood_model4, "\n")
+cat("Log-Likelihood for Model 5:", log_likelihood_model5, "\n")
+
+
+#Task 2.4 compute AIC and BIC
+# Function to compute AIC
+compute_AIC <- function(model, log_likelihood, k) {
+  AIC <- 2 * k - 2 * log_likelihood
+  return(AIC)
+}
+
+# Function to compute BIC
+compute_BIC <- function(model, log_likelihood, k, n) {
+  BIC <- k * log(n) - 2 * log_likelihood
+  return(BIC)
+}
+
+# Number of parameters (k) for each model
+k_model1 <- length(coefficients(model1))
+k_model2 <- length(coefficients(model2))
+k_model3 <- length(coefficients(model3))
+k_model4 <- length(coefficients(model4))
+k_model5 <- length(coefficients(model5))
+
+# Compute AIC for each model
+AIC_model1 <- compute_AIC(model1, log_likelihood_model1, k_model1)
+AIC_model2 <- compute_AIC(model2, log_likelihood_model2, k_model2)
+AIC_model3 <- compute_AIC(model3, log_likelihood_model3, k_model3)
+AIC_model4 <- compute_AIC(model4, log_likelihood_model4, k_model4)
+AIC_model5 <- compute_AIC(model5, log_likelihood_model5, k_model5)
+
+# Compute BIC for each model
+BIC_model1 <- compute_BIC(model1, log_likelihood_model1, k_model1, length(y))
+BIC_model2 <- compute_BIC(model2, log_likelihood_model2, k_model2, length(y))
+BIC_model3 <- compute_BIC(model3, log_likelihood_model3, k_model3, length(y))
+BIC_model4 <- compute_BIC(model4, log_likelihood_model4, k_model4, length(y))
+BIC_model5 <- compute_BIC(model5, log_likelihood_model5, k_model5, length(y))
+
+# Display AIC and BIC for each model
+cat("AIC for Model 1:", AIC_model1, "\n")
+cat("AIC for Model 2:", AIC_model2, "\n")
+cat("AIC for Model 3:", AIC_model3, "\n")
+cat("AIC for Model 4:", AIC_model4, "\n")
+cat("AIC for Model 5:", AIC_model5, "\n")
+
+cat("BIC for Model 1:", BIC_model1, "\n")
+cat("BIC for Model 2:", BIC_model2, "\n")
+cat("BIC for Model 3:", BIC_model3, "\n")
+cat("BIC for Model 4:", BIC_model4, "\n")
+cat("BIC for Model 5:", BIC_model5, "\n")
+
+
+#Task 2.5
+# Function to create Q-Q plot
+qq_plot <- function(residuals, model_name) {
+  qqnorm(residuals, main = paste("Q-Q Plot for Residuals (", model_name, ")", sep = ""), col = "blue")
+  qqline(residuals, col = "red")
+}
+
+# Create Q-Q plot for each model
+qq_plot(model1$residuals, "Model 1")
+qq_plot(model2$residuals, "Model 2")
+qq_plot(model3$residuals, "Model 3")
+qq_plot(model4$residuals, "Model 4")
+qq_plot(model5$residuals, "Model 5")
+
+# Display the plots
+par(mfrow=c(2,3))  # Arrange plots in a 2x3 grid
+
+
+#Task 2.6
+# Data frame to store AIC, BIC, and model names
+model_selection <- data.frame(
+  Model = c("Model 1", "Model 2", "Model 3", "Model 4", "Model 5"),
+  AIC = c(AIC_model1, AIC_model2, AIC_model3, AIC_model4, AIC_model5),
+  BIC = c(BIC_model1, BIC_model2, BIC_model3, BIC_model4, BIC_model5)
+)
+
+# Add columns for Q-Q plot diagnostics
+for (i in 1:5) {
+  residuals <- get(paste("model", i, sep = "") )$residuals
+  model_selection[paste("Residual_QQ_", i, sep = ""),] <- shapiro.test(residuals)$p.value
+}
+
+# Display the AIC, BIC, and Q-Q plot diagnostics
+print(model_selection)
+
+# Choose the model with the minimum AIC
+best_model_AIC <- model_selection[which.min(model_selection$AIC), "Model"]
+
+# Choose the model with the minimum BIC
+best_model_BIC <- model_selection[which.min(model_selection$BIC), "Model"]
+
+# Choose the model with the best Q-Q plot diagnostics
+best_model_residuals <- model_selection[, grep("Residual_QQ", names(model_selection)), drop = FALSE]
+best_model_residuals <- model_selection[which.min(rowSums(best_model_residuals)), "Model"]
+
+# Display the selected models
+cat("Best Model (AIC):", best_model_AIC, "\n")
+cat("Best Model (BIC):", best_model_BIC, "\n")
+cat("Best Model (Residuals):", best_model_residuals, "\n")
+
+#Task 2.7
+library(caret)
+
+# Set the seed for reproducibility
+set.seed(123)
+
+# Specify the percentage for training data
+train_percentage <- 0.7
+
+# Use createDataPartition to split the indices of the dataset
+train_indices <- caret::createDataPartition(gene_data$X4, p = train_percentage, list = FALSE)
+
+# Create training and testing datasets
+train_data <- gene_data[train_indices, ]
+test_data <- gene_data[-train_indices, ]
+
+#2.7.1
+# Fit the best model using the training dataset
+best_model_train <- lm(X4 ~ ., data = train_data)
+
+# Print a summary of the model
+summary(best_model_train)
+
+
+#2.7.2
+# Predict the response variable on the testing data
+predictions <- predict(best_model_train, newdata = test_data)
+
+# Print the predictions or use them as needed
+print(predictions)
+
+#2.7.3
+# Compute 95% prediction intervals
+prediction_intervals <- predict(best_model_train, newdata = test_data, interval = "prediction", level = 0.95)
+
+# Create a dataframe for plotting
+plot_data <- data.frame(
+  x = seq_along(predictions),  # Assuming a sequential x-axis for simplicity
+  y_actual = test_data$X4,
+  y_pred = predictions,
+  lower = prediction_intervals[, "lwr"],
+  upper = prediction_intervals[, "upr"]
+)
+
+# Plotting
+plot(plot_data$x, plot_data$y_actual, pch = 16, col = "blue", ylim = range(c(plot_data$y_actual, plot_data$lower, plot_data$upper)), xlab = "Data Points", ylab = "Response Variable", main = "Model Prediction with Confidence Intervals")
+points(plot_data$x, plot_data$y_pred, pch = 17, col = "red")
+arrows(plot_data$x, plot_data$lower, plot_data$x, plot_data$upper, angle = 90, code = 3, length = 0.1, col = "green")
+legend("topright", legend = c("Actual", "Predicted", "95% Confidence Intervals"), col = c("blue", "red", "green"), pch = c(16, 17, NA))
+
+
+#Task 3.1
+# Assuming you have data for 5 genes in separate columns, replace with actual column names
+gene1 <- gene_data$X1
+gene2 <- gene_data$X2
+gene3 <- gene_data$X3
+gene4 <- gene_data$X4
+gene5 <- gene_data$X5
+
+# Function to compute confidence intervals for the mean
+compute_mean_ci <- function(data, confidence_level) {
+  n <- length(data)
+  sample_mean <- mean(data)
+  sample_variance <- var(data)
+  t_value <- qt((confidence_level + 1) / 2, df = n - 1)
+  margin_of_error <- t_value * sqrt(sample_variance / n)
+  
+  lower_ci <- sample_mean - margin_of_error
+  upper_ci <- sample_mean + margin_of_error
+  
+  return(c(lower_ci, upper_ci))
+}
+
+# Specify the confidence levels
+confidence_levels <- c(0.90, 0.95, 0.99)
+
+# Compute confidence intervals for each gene
+gene1_ci <- apply(sapply(confidence_levels, function(conf) compute_mean_ci(gene1, conf)), 2, unlist)
+gene2_ci <- apply(sapply(confidence_levels, function(conf) compute_mean_ci(gene2, conf)), 2, unlist)
+gene3_ci <- apply(sapply(confidence_levels, function(conf) compute_mean_ci(gene3, conf)), 2, unlist)
+gene4_ci <- apply(sapply(confidence_levels, function(conf) compute_mean_ci(gene4, conf)), 2, unlist)
+gene5_ci <- apply(sapply(confidence_levels, function(conf) compute_mean_ci(gene5, conf)), 2, unlist)
+
+# Print the results
+cat("Gene 1 Confidence Intervals:\n", gene1_ci, "\n")
+cat("Gene 2 Confidence Intervals:\n", gene2_ci, "\n")
+cat("Gene 3 Confidence Intervals:\n", gene3_ci, "\n")
+cat("Gene 4 Confidence Intervals:\n", gene4_ci, "\n")
+cat("Gene 5 Confidence Intervals:\n", gene5_ci, "\n")
+
+
+#3.2
+# Assuming the data for a specific gene is in a variable named gene_data$X1
+gene1 <- gene_data$X1
+
+library(moments)
+
+# Compute the scale and skewness of the dataset
+data_scale <- sd(gene1)
+data_skewness <- skewness(gene1)
+
+# Print the scale and skewness
+cat("Scale of the data:", data_scale, "\n")
+cat("Skewness of the data:", data_skewness, "\n")
+
+# Plot the histogram
+hist(gene1, col = "lightblue", main = "Histogram of Gene Data", xlab = "Gene Expression Levels", ylab = "Frequency")
+
+# Overlay a normal distribution on the histogram
+x <- seq(min(gene1), max(gene1), length = 100)
+y <- dnorm(x, mean = mean(gene1), sd = data_scale)
+lines(x, y * length(gene1) * diff(hist(gene1, plot = FALSE)$breaks[1:2]), col = "red", lwd = 2)
+
+# Add a vertical line at the mode
+mode_value <- x[which.max(y)]
+abline(v = mode_value, col = "green", lwd = 2)
+
+# Add legend
+legend("topright", legend = c("Data", "Fitted Normal Distribution", "Mode"), col = c("lightblue", "red", "green"), lty = 1, lwd = 2)
+
