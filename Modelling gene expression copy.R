@@ -279,7 +279,7 @@ prediction_intervals <- predict(best_model_train, newdata = test_data, interval 
 
 # Create a dataframe for plotting
 plot_data <- data.frame(
-  x = seq_along(predictions),  # Assuming a sequential x-axis for simplicity
+  x = seq_along(predictions), 
   y_actual = test_data$X4,
   y_pred = predictions,
   lower = prediction_intervals[, "lwr"],
@@ -294,7 +294,7 @@ legend("topright", legend = c("Actual", "Predicted", "95% Confidence Intervals")
 
 
 #Task 3.1
-# Assuming you have data for 5 genes in separate columns, replace with actual column names
+# data for 5 genes in separate columns
 gene1 <- gene_data$X1
 gene2 <- gene_data$X2
 gene3 <- gene_data$X3
@@ -334,7 +334,7 @@ cat("Gene 5 Confidence Intervals:\n", gene5_ci, "\n")
 
 
 #3.2
-# Assuming the data for a specific gene is in a variable named gene_data$X1
+############################## gene_data$X1 ##############################
 gene1 <- gene_data$X1
 
 library(moments)
@@ -348,7 +348,7 @@ cat("Scale of the data:", data_scale, "\n")
 cat("Skewness of the data:", data_skewness, "\n")
 
 # Plot the histogram
-hist(gene1, col = "lightblue", main = "Histogram of Gene Data", xlab = "Gene Expression Levels", ylab = "Frequency")
+hist(gene1, col = "lightblue", main = "Histogram of Gene 1 Data", xlab = "Gene Expression Levels", ylab = "Frequency")
 
 # Overlay a normal distribution on the histogram
 x <- seq(min(gene1), max(gene1), length = 100)
@@ -362,3 +362,104 @@ abline(v = mode_value, col = "green", lwd = 2)
 # Add legend
 legend("topright", legend = c("Data", "Fitted Normal Distribution", "Mode"), col = c("lightblue", "red", "green"), lty = 1, lwd = 2)
 
+
+############################## gene_data$X2 ##############################
+gene2 <- gene_data$X2
+
+library(moments)
+
+# Compute the scale and skewness of the dataset
+data_scale <- sd(gene2)
+data_skewness <- skewness(gene2)
+
+# Print the scale and skewness
+cat("Scale of the data:", data_scale, "\n")
+cat("Skewness of the data:", data_skewness, "\n")
+
+# Plot the histogram
+hist(gene1, col = "lightblue", main = "Histogram of Gene 2 Data", xlab = "Gene Expression Levels", ylab = "Frequency")
+
+# Overlay a normal distribution on the histogram
+x <- seq(min(gene2), max(gene2), length = 100)
+y <- dnorm(x, mean = mean(gene2), sd = data_scale)
+lines(x, y * length(gene2) * diff(hist(gene2, plot = FALSE)$breaks[1:2]), col = "red", lwd = 2)
+
+# Add a vertical line at the mode
+mode_value <- x[which.max(y)]
+abline(v = mode_value, col = "green", lwd = 2)
+
+
+############################## gene_data$X3 ##############################
+gene3 <- gene_data$X3
+
+library(moments)
+
+# Compute the scale and skewness of the dataset
+data_scale <- sd(gene3)
+data_skewness <- skewness(gene3)
+
+# Print the scale and skewness
+cat("Scale of the data:", data_scale, "\n")
+cat("Skewness of the data:", data_skewness, "\n")
+
+# Plot the histogram
+hist(gene3, col = "lightblue", main = "Histogram of Gene 3 Data", xlab = "Gene Expression Levels", ylab = "Frequency")
+
+# Overlay a normal distribution on the histogram
+x <- seq(min(gene3), max(gene3), length = 100)
+y <- dnorm(x, mean = mean(gene3), sd = data_scale)
+lines(x, y * length(gene3) * diff(hist(gene3, plot = FALSE)$breaks[1:2]), col = "red", lwd = 2)
+
+# Add a vertical line at the mode
+mode_value <- x[which.max(y)]
+abline(v = mode_value, col = "green", lwd = 2)
+
+############################## gene_data$X4 ##############################
+gene4 <- gene_data$X4
+
+library(moments)
+
+# Compute the scale and skewness of the dataset
+data_scale <- sd(gene4)
+data_skewness <- skewness(gene4)
+
+# Print the scale and skewness
+cat("Scale of the data:", data_scale, "\n")
+cat("Skewness of the data:", data_skewness, "\n")
+
+# Plot the histogram
+hist(gene4, col = "lightblue", main = "Histogram of Gene 4 Data", xlab = "Gene Expression Levels", ylab = "Frequency")
+
+# Overlay a normal distribution on the histogram
+x <- seq(min(gene4), max(gene4), length = 100)
+y <- dnorm(x, mean = mean(gene4), sd = data_scale)
+lines(x, y * length(gene4) * diff(hist(gene4, plot = FALSE)$breaks[1:2]), col = "red", lwd = 2)
+
+# Add a vertical line at the mode
+mode_value <- x[which.max(y)]
+abline(v = mode_value, col = "green", lwd = 2)
+
+############################## gene_data$X5 ##############################
+gene5 <- gene_data$X5
+
+library(moments)
+
+# Compute the scale and skewness of the dataset
+data_scale <- sd(gene5)
+data_skewness <- skewness(gene5)
+
+# Print the scale and skewness
+cat("Scale of the data:", data_scale, "\n")
+cat("Skewness of the data:", data_skewness, "\n")
+
+# Plot the histogram
+hist(gene5, col = "lightblue", main = "Histogram of Gene 5 Data", xlab = "Gene Expression Levels", ylab = "Frequency")
+
+# Overlay a normal distribution on the histogram
+x <- seq(min(gene5), max(gene5), length = 100)
+y <- dnorm(x, mean = mean(gene5), sd = data_scale)
+lines(x, y * length(gene5) * diff(hist(gene5, plot = FALSE)$breaks[1:2]), col = "red", lwd = 2)
+
+# Add a vertical line at the mode
+mode_value <- x[which.max(y)]
+abline(v = mode_value, col = "green", lwd = 2)
