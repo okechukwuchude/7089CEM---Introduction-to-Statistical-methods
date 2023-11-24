@@ -98,7 +98,7 @@ summary(model5)$coefficients
 # Function to compute RSS
 compute_RSS <- function(model, X, y) {
   residuals <- y - predict(model, newdata = data.frame(X))
-  RSS <- sum(residuals^2) / length(residuals)
+  RSS <- sum(residuals^2)
   return(RSS)
 }
 
